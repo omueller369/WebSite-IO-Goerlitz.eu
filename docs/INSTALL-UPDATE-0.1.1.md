@@ -1,3 +1,5 @@
+> Installer 0.1.2 behebt den Gunicorn-Start. Die Website bleibt Version 0.1.1. Zum Fortsetzen die neue Script-Datei laden und `install --ref v0.1.2` ausführen.
+
 # Version 0.1.1: Website, Postfach und Updates
 
 Das eigenständige Projekt `omueller369/WebSite-IO-Goerlitz.eu` wird unter **https://ctl-software.io-goerlitz.eu/** veröffentlicht. Das Postfach **info@io-goerlitz.eu** wird auf dem vorhandenen Server ergänzt. RailSoftware-Repository, Datenbank und Anwendung werden nicht aktualisiert oder neu gestartet.
@@ -13,7 +15,7 @@ Das ist kein Neuinstallationsscript für einen leeren Server und kein ISPConfig-
 Auf dem Zielserver in einem administrativen Arbeitsverzeichnis:
 
 ```sh
-curl -fL https://raw.githubusercontent.com/omueller369/WebSite-IO-Goerlitz.eu/v0.1.1/deploy/io-website.py -o io-website.py
+curl -fL https://raw.githubusercontent.com/omueller369/WebSite-IO-Goerlitz.eu/v0.1.2/deploy/io-website.py -o io-website.py
 python3 io-website.py plan
 ```
 
@@ -22,7 +24,7 @@ Die Datei vor dem privilegierten Start ansehen. Kein `curl | sudo bash`. Das Scr
 ## 2. Erster Lauf: DNS vorbereiten
 
 ```sh
-sudo python3 io-website.py install --ref v0.1.1
+sudo python3 io-website.py install --ref v0.1.2
 ```
 
 Die Routine prüft die vorhandenen Dienste, erzeugt einen eigenen DKIM-Schlüssel und gibt die nötigen STRATO-DNS-Werte aus. Sie speichert die Werte in `/etc/io-website/dns-required.txt`. Solange DNS nicht passt, stoppt sie **vor Postfach-Erstellung und Website-Umschaltung**. Ein Abbruch an dieser Stelle ist vorgesehen; nach Korrektur denselben Befehl erneut ausführen.
@@ -86,7 +88,7 @@ sudo io-website update
 `update` lädt das neueste veröffentlichte GitHub-Release, also keine Drafts oder Vorabversionen. Für einen bestimmten Stand:
 
 ```sh
-sudo io-website update --ref v0.1.1
+sudo io-website update --ref v0.1.2
 ```
 
 Ein bewusst gewählter Branch ist mit `--ref main` möglich. Normale Updates ändern weder Postfachpasswort noch bestehende Maildaten. Die zum jeweiligen Commit gehörende Installationsroutine wird für folgende Aufrufe mit aktualisiert. Bei anderen VirtualHost-Pfaden `--vhost /etc/apache2/sites-available/DEINE.conf` angeben; vorhandene `sites-enabled`-Symlinks nicht als Schreibziel verwenden.
@@ -111,7 +113,7 @@ Erneut verdeckte Abfrage; Dovecot-Hash und Formularzugang werden gemeinsam aktua
 
 Er kann seine Tabellen bei Mitarbeiteränderungen neu schreiben. Die Website nutzt deshalb eigene Postfix-Tabellen. Für OpenDKIM werden die CTL-Signiertabellen und die Website-Domain in getrennte gemeinsame Lesetabellen zusammengeführt. Ein additiver Drop-in an `ctl-mailboxes.service` aktualisiert diese nach dessen Abschluss. Die gleiche Dateisperre wie im vorhandenen Provisioner verhindert verlorene Kontoänderungen. Unveränderte Tabellen lösen dabei keinen erneuten Maildienst-Neustart aus.
 
-Die Domain `io-goerlitz.eu` nicht zusätzlich als von CTL verwaltete Mitarbeiterdomain anlegen. Die Website benötigt keinen Eintrag in der RailSoftware-Datenbank. Falls die komplette CTL-Serverinstallation später Apache-/Mail-Hauptkonfiguration neu erzeugt, `sudo io-website install --ref v0.1.1` zur Prüfung/Wiederanbindung nutzen; bei unbekannten Konfigurationen abbrechen und abgleichen.
+Die Domain `io-goerlitz.eu` nicht zusätzlich als von CTL verwaltete Mitarbeiterdomain anlegen. Die Website benötigt keinen Eintrag in der RailSoftware-Datenbank. Falls die komplette CTL-Serverinstallation später Apache-/Mail-Hauptkonfiguration neu erzeugt, `sudo io-website install --ref v0.1.2` zur Prüfung/Wiederanbindung nutzen; bei unbekannten Konfigurationen abbrechen und abgleichen.
 
 ## Dateien und Sicherungen
 

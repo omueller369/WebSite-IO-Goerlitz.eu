@@ -98,6 +98,22 @@ class DeploymentTests(unittest.TestCase):
         result,extra=d.website_logging(value)
         self.assertIn('CustomLog /var/log/apache2/existing.log combined env=!io_website',result)
         self.assertEqual(extra,'')
+    def test_module_start_without_cli_wrapper(self):
+        outcome=type('Result',(),{'returncode':0})()
+        with patch.object(d.subprocess,'run',return_value=outcome),patch.object(d,'run',return_value='') as command:
+            d.ensure_gunicorn()
+        self.assertEqual(command.call_args_list[-1].args[0],['/usr/bin/python3','-m','gunicorn','--version'])
+        self.assertFalse(any('apt-get' in c.args[0] for c in command.call_args_list))
+    def test_missing_system_module_installed_and_verified(self):
+        outcome=type('Result',(),{'returncode':1})()
+        with patch.object(d.subprocess,'run',return_value=outcome),patch.object(d,'run',return_value='') as command:
+            d.ensure_gunicorn()
+        self.assertIn(['/usr/bin/python3','-c','import gunicorn; import gunicorn.app.wsgiapp'],[c.args[0] for c in command.call_args_list])
+        self.assertIn(['apt-get','install','-y','python3-gunicorn'],[c.args[0] for c in command.call_args_list])
+    def test_unit_uses_system_python_module(self):
+        unit=(Path(__file__).resolve().parents[2]/'server/io-website-contact.service').read_text()
+        self.assertIn('ExecStart=/usr/bin/python3 -m gunicorn ',unit)
+        self.assertNotIn('ExecStart=/usr/bin/gunicorn ',unit)
     def test_plan_has_no_system_mutations(self):
         with patch.object(d.sys,'argv',['io-website','plan']),patch.object(d,'run') as run,patch.object(d,'atomic') as atomic,patch('sys.stdout',io.StringIO()):
             d.main()

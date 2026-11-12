@@ -27,7 +27,7 @@ import urllib.request
 import urllib.error
 from contextlib import contextmanager
 
-VERSION = '0.1.1'
+VERSION = '0.1.2'
 REPO = 'https://github.com/omueller369/WebSite-IO-Goerlitz.eu.git'
 HOST = 'ctl-software.io-goerlitz.eu'
 DOMAIN = 'io-goerlitz.eu'
@@ -475,6 +475,18 @@ def switch_link(target):
     os.replace(nextlink,current)
 
 
+def ensure_gunicorn():
+    # Match systemd's exact interpreter; no dependency on PATH or CLI wrappers.
+    command=['/usr/bin/python3','-c','import gunicorn; import gunicorn.app.wsgiapp']
+    result=subprocess.run(command,capture_output=True,text=True)
+    if result.returncode:
+        print('Installiere separates Ubuntu-Paket python3-gunicorn.')
+        run(['apt-get','update'])
+        run(['apt-get','install','-y','python3-gunicorn'])
+    run(command)
+    run(['/usr/bin/python3','-m','gunicorn','--version'])
+
+
 def service_config(source):
     # Runtime code is unprivileged. Password passed through systemd credentials, not env or argv.
     text=read(source/'server/io-website-contact.service')
@@ -669,9 +681,7 @@ def main():
             public=dkim_key();records=dns_records(public,args.ipv4)
             atomic(ETC/'dns-required.txt',records,0o600);print(records)
             dns_check(public,args.ipv4)
-        if not shutil.which('gunicorn'):
-            print('Installiere separates Ubuntu-Paket python3-gunicorn.')
-            run(['apt-get','update']);run(['apt-get','install','-y','python3-gunicorn'])
+        ensure_gunicorn()
         if not shutil.which('curl'):raise Stop('curl wird für lokale HTTPS-Prüfungen benötigt.')
         source,sha=fetch_source(args.ref)
         try:
