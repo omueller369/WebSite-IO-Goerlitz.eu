@@ -1,0 +1,9 @@
+# Nur im bestehenden HTTPS-VirtualHost, vor dem allgemeinen Backend-Proxy.
+# Port 8091 vorher auf Konflikte prüfen; ausschließlich Loopback verwenden.
+# Benötigt Apache-Module proxy, proxy_http und headers.
+ProxyPassMatch "^/website-contact$" "http://127.0.0.1:8091/website-contact" connectiontimeout=3 timeout=20
+ProxyPassReverse "/website-contact" "http://127.0.0.1:8091/website-contact"
+<LocationMatch "^/website-contact$">
+    RequestHeader set X-Website-IP "expr=%{REMOTE_ADDR}"
+    LimitRequestBody 32768
+</LocationMatch>

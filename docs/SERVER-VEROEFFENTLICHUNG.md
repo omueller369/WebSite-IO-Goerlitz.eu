@@ -44,11 +44,11 @@ mv -Tf current.next current
 
 `<release>` vorher durch den echten Ordnernamen ersetzen. Bei Folge-Releases das vorherige Linkziel mit `readlink current` für Rollback festhalten.
 
-## 4. Nur die Homepage zuordnen
+## 4. Nur die expliziten Website-Pfade zuordnen
 
 Die Datei `apache-website.conf.example` ist ein Einfügefragment für den bestehenden HTTPS-VirtualHost. Die Proxy-Ausnahmen müssen VOR jeder allgemeinen ProxyPass-Regel stehen. Alle bisherigen Backend-Zuordnungen danach unverändert lassen. Das vorhandene `/website-assets/` muss vorab unbenutzt sein; andernfalls einen neuen Namen sowohl in HTML als auch in der Konfiguration wählen.
 
-Nur `/`, `/index.html` und `/website-assets/` gehen zum statischen Export. Jeder andere Pfad folgt weiter den bisherigen Software-Regeln. Es gibt keinen `index.html`-Fallback für unbekannte Routen. Kein DNS-Umschalten auf Sites: Das würde ohne zusätzliches Routing das vorhandene Backend umgehen. Die Sites-Adresse ist eine getrennte Vorschau und nicht der Ersatz für den Software-Host.
+Nur `/`, `/index.html`, die explizit im Apache-Fragment aufgelisteten Präsentationsseiten (mit und ohne abschließenden Slash) und `/website-assets/` gehen zum statischen Export. Die Kontakt-Route `/website-contact` wird ausschließlich über das separate Kontaktfragment zugeordnet. Jeder andere Pfad folgt weiter den bisherigen Software-Regeln. Es gibt keinen `index.html`-Fallback für unbekannte Routen. Kein DNS-Umschalten auf Sites: Das würde ohne zusätzliches Routing das vorhandene Backend umgehen. Die Sites-Adresse ist eine getrennte Vorschau und nicht der Ersatz für den Software-Host.
 
 Apache-Regeln aus verschiedenen Kontexten können sich überlagern. Vorhandene Rewrite-/Location-Regeln, die `/` oder Assets abfangen, mit dem tatsächlichen VirtualHost abstimmen. Bei fehlender Klarheit zuerst auf einer Kopie des VirtualHosts testen.
 
@@ -72,3 +72,9 @@ Bei Routingfehlern das eingefügte Fragment entfernen bzw. die gesicherte Virtua
 ## Pflege
 
 Änderungen nur in diesem Website-Repository vornehmen; Export prüfen, neues Release kopieren und Symlink umschalten. Keine automatische Server-Veröffentlichung und keine Repository-Verknüpfung mit RailSoftware. Betreiberangaben, Impressum und Datenschutzhinweise vor öffentlicher Freischaltung fachlich ergänzen. Die neue Seite selbst verwendet keine Cookies, Tracker oder extern geladenen Ressourcen; die verlinkten Portale haben eigene Datenverarbeitung.
+
+## Ergänzung: Mehrseitige Präsentation und Kontakt
+
+Die Website enthält jetzt Leistungen, Unternehmen, Entwicklung/Rail Software, KI-Musik, Kontakt, Impressum und Datenschutz. Sämtliche neuen Seitenpfade müssen vor der Übernahme auf Konflikte geprüft werden. Das Apache-Fragment enthält eine geschlossene Pfadliste, keinen Präfix-Catch-all für `/entwicklung`. Auch unbekannte Unterpfade bleiben beim bisherigen Backend. `/tf`, `/admin`, `/api` und alle sonstigen vorhandenen Software-Pfade werden nicht überschrieben.
+
+Der optionale Formularversand wird getrennt nach [KONTAKTFORMULAR.md](KONTAKTFORMULAR.md) eingerichtet. Für die Freigabe rechtlicher Texte [REDAKTION.md](REDAKTION.md) abarbeiten. Die bestehende Portal-Authentifizierung bleibt erhalten; eine neue gemeinsame Zugangssperre ist noch nicht umgesetzt. Öffentlich sind keine Portal-Links vorhanden. Die Demo-/Download-Seite ist nur eine öffentliche Statusseite ohne Demo, Dateien oder Login-Simulation.

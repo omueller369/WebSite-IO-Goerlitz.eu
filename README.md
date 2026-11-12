@@ -1,27 +1,39 @@
-# Rail Software Website
+# Rail Software Website / IO-Software-Görlitz
 
-Eigenständige statische Website. GitHub: `omueller369/WebSite-IO-Goerlitz.eu`.
-Unabhängig von `omueller369/RailSoftware`: keine Submodule, keine Backend-Dateien, keine gemeinsamen Builds.
+Eigenständige statische Präsentation mit separatem Kontakt-Maildienst.
+Pflegebasis: `omueller369/WebSite-IO-Goerlitz.eu`; unabhängig von `omueller369/RailSoftware`.
+Kein Submodul, keine Backend-Kopplung, keine gemeinsamen Builds.
 
-## Pflege und Export
+## Seiten
 
-Inhalte: `src/index.html`; Gestaltung: `src/website-assets/site.css`.
+- `/`: Startseite
+- `/leistungen/`: Beratung, Auftragsentwicklung, Leasing, Wartung und Betreuung
+- `/unternehmen/`: privates Projekt von Oliver Müller, Görlitz
+- `/entwicklung/`: Produktübersicht
+- `/entwicklung/rail-software/`: öffentliche Produktvorstellung, Status „in Entwicklung“
+- `/entwicklung/rail-software/demo-download/`: öffentliche Statusseite ohne geschützte Inhalte; Konten, Demo und Downloads folgen später
+- `/ki-musik/`: persönliche Songs, Unternehmensmusik, Intros und Hintergrundmusik
+- `/kontakt/`, `/impressum/`, `/datenschutz/`
+
+TF-Portal und Verwaltung sind auf keiner öffentlichen Seite verlinkt. Ihre bestehenden Adressen und ihre vorhandene Authentifizierung bleiben unberührt. Eine zusätzliche serverseitige Zugangssperre und persönlich angelegte Demo-Konten sind noch nicht umgesetzt. Niemals vertrauliche Inhalte in `src/` oder `dist/` ablegen: alle statischen Dateien sind abrufbar.
+
+## Pflege, Logo und Export
+
+HTML in `src/`, lokale Assets in `src/website-assets/`. SVG-Logo: `io-logo.svg` (Wortmarke) und `io-mark.svg` (Bildzeichen). Gestaltung: Petrol und Hellgrün, keine externen Fonts, Tracker oder Einbettungen.
 
 ```sh
 python3 scripts/build.py
+python3 scripts/check_static.py
+python3 -m unittest discover -s server/tests -v
+node --check src/website-assets/site.js
 ```
 
-`dist/` enthält die vollständigen Veröffentlichungsdateien, ohne Laufzeit, Datenbank, externe Fonts, JavaScript oder Paketabhängigkeiten. Der Export kann bei jedem statischen Webserver betrieben werden. Alle Portal-Links zeigen absichtlich auf den bestehenden HTTPS-Server, auch in der Sites-Vorschau.
+`dist/` ist der vollständige statische Export ohne Node-/Python-Laufzeit auf dem Webserver. GitHub Actions stellt diesen Export als Artefakt `rail-software-website-static` bereit; keine automatische Server-Veröffentlichung.
 
-GitHub Actions exportiert bei Push und manuellem Start die Veröffentlichungsdateien als herunterladbares Artefakt `rail-software-website-static`. Es findet keine automatische Server-Veröffentlichung statt.
+Das Kontaktformular braucht für tatsächlichen Versand den unabhängig bereitgestellten WSGI-Maildienst in `server/`. In der privaten Sites-Vorschau und bei fehlender SMTP-Konfiguration bleibt der Versand deaktiviert. Telefon und E-Mail funktionieren als alternative Kontaktwege. Keine Daten werden von der Vorschau an den Produktivserver gesendet.
 
-## Getrennte Veröffentlichung
+## Veröffentlichung
 
-Siehe [Server-Anleitung](docs/SERVER-VEROEFFENTLICHUNG.md) und [Apache-Vorlage](docs/apache-website.conf.example).
-Sites verwaltet eine eigene Quellkopie für seine Vorschau; dieses GitHub-Repository bleibt die unabhängige Pflegebasis. Änderungen aus GitHub müssen für eine aktualisierte Sites-Veröffentlichung übernommen werden; es gibt keine eingerichtete automatische Synchronisation.
+[Server-Anleitung](docs/SERVER-VEROEFFENTLICHUNG.md), [Apache-Website-Fragment](docs/apache-website.conf.example), [Kontaktbetrieb](docs/KONTAKTFORMULAR.md), [Redaktions- und Freigabehinweise](docs/REDAKTION.md).
 
-## Routing-Vertrag
-
-Die neue Website belegt ausschließlich `/` (sowie `/index.html`) und `/website-assets/`. Alle anderen Pfade werden weiterhin von der vorhandenen Software bedient, insbesondere `/tf`, `/admin`, APIs, Anmelde-, Installations- und PWA-Dateien. Kein SPA-Fallback und keine Änderung am DNS oder Backend.
-
-Die Server-Anleitung ist vorbereitet; die Zieldomain wurde nicht umgestellt. Rechtliche Pflichtangaben müssen vor öffentlicher Freischaltung anhand der tatsächlichen Betreiberangaben ergänzt werden.
+Sites verwaltet eine getrennte Quellkopie für die private Vorschau. Änderungen im GitHub-Repository müssen für eine neue Sites-Version übernommen werden; keine automatische Synchronisation eingerichtet. Die Strato-Zieldomain wurde nicht umgestellt.

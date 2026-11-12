@@ -1,12 +1,12 @@
-# In den BESTEHENDEN HTTPS-VirtualHost einfügen, vor jeder allgemeinen
-# ProxyPass-Regel. Vorher bestehende Alias-/Rewrite-/Location-Regeln prüfen.
-# Kein kompletter VirtualHost: TLS, Logs und Backend-Ziel bleiben unverändert.
-
-# Nur diese beiden Dateipfade und der eigene Asset-Namensraum werden ausgenommen.
+# In den BESTEHENDEN HTTPS-VirtualHost einfügen.
+# Vor sämtlichen allgemeinen ProxyPass-Regeln; Konflikte vorher ausschließen.
+# TLS, Authentifizierung und bestehende Backend-Regeln bleiben erhalten.
 ProxyPassMatch "^/(?:index\.html)?$" "!"
+ProxyPassMatch "^/(leistungen|unternehmen|entwicklung|ki-musik|kontakt|impressum|datenschutz|entwicklung/rail-software|entwicklung/rail-software/demo-download)(?:/index\.html|/)?$" "!"
 ProxyPass "/website-assets/" "!"
 
 AliasMatch "^/(?:index\.html)?$" "/var/www/rail-website/current/index.html"
+AliasMatch "^/(leistungen|unternehmen|entwicklung|ki-musik|kontakt|impressum|datenschutz|entwicklung/rail-software|entwicklung/rail-software/demo-download)(?:/index\.html|/)?$" "/var/www/rail-website/current/$1/index.html"
 Alias "/website-assets/" "/var/www/rail-website/current/website-assets/"
 <Directory "/var/www/rail-website/">
     Require all granted
@@ -14,6 +14,7 @@ Alias "/website-assets/" "/var/www/rail-website/current/website-assets/"
     Options -Indexes -ExecCGI
 </Directory>
 
-# Danach ALLE vorhandenen ProxyPass/ProxyPassReverse- und sonstigen
-# Software-Regeln beibehalten, einschließlich der allgemeinen Backend-Regel.
-# Nicht DocumentRoot, FallbackResource oder globale Rewrite-Regeln ersetzen.
+# Danach ALLE bisherigen Backend-Regeln unverändert beibehalten.
+# KEIN statischer Catch-all und KEIN SPA-Fallback.
+# Kontaktfragment separat VOR der allgemeinen Backend-Proxy-Regel ergänzen,
+# wenn der getrennte Maildienst eingerichtet und getestet ist.
