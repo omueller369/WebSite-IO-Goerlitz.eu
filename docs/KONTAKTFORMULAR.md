@@ -1,25 +1,18 @@
-# Separater Kontaktversand auf dem Strato-Server
+# Kontaktformular 0.1.1
 
-Die Website bleibt statisch exportierbar. Nur der Formularversand nutzt einen separaten, kleinen Python-WSGI-Dienst; er ist unabhängig von RailSoftware und dessen Datenbank. Empfänger ist fest `omueller369@gmail.com`. SMTP-Zugangsdaten werden ausschließlich auf dem Server eingerichtet, niemals im Chat, Repository oder statischen Export.
+Formularfelder: Name, E-Mail, Thema (Software / Rail Software / KI-Musik), Nachricht. Fester Empfänger und authentifizierter Absender: **info@io-goerlitz.eu**. Die Besucheradresse wird ausschließlich als Reply-To gesetzt; Empfänger oder SMTP-Header können nicht durch Besuchereingaben geändert werden.
 
-## Installation (Debian/Apache)
+Einrichtung über [INSTALL-UPDATE-0.1.1.md](INSTALL-UPDATE-0.1.1.md). Das Mailpostfach liegt auf dem vorhandenen Strato-Server; das Script richtet für dieses Konto keine Gmail-Weiterleitung ein. Vorhandene Weiterleitungen anderer CTL-Postfächer bleiben unberührt.
 
-1. Freien Loopback-Port 8091 prüfen. Auf dem Server `sudo apt install python3-gunicorn` installieren. Der Paketpfad `/usr/bin/gunicorn` ist mit der Unit abzugleichen.
-2. `server/contact.py` nach `/opt/io-website-contact/contact.py` kopieren. Dateien müssen für den Dienst lesbar und dürfen für ihn nicht schreibbar sein. In der Unit wird `DynamicUser=yes` verwendet.
-3. `/etc/io-website/` als root anlegen und `server/contact.env.example` nach `/etc/io-website/contact.env` kopieren. Nur root darf die Datei lesen (`chmod 600`). Echte Werte für SMTP_HOST, SMTP_FROM und ggf. SMTP_USERNAME/SMTP_PASSWORD eintragen. SMTP_FROM muss beim Anbieter als Absender zugelassen sein. Ausschließlich TLS: `starttls`/587 oder `ssl`/465. Keine Google-Passwörter oder sonstigen Zugangsdaten aus dem Kontakt-Empfänger ableiten; der Versanddienst kann ein anderes geeignetes SMTP-Postfach nutzen.
-4. `server/io-website-contact.service` nach `/etc/systemd/system/` kopieren. `sudo systemctl daemon-reload` und `sudo systemctl enable --now io-website-contact` ausführen.
-5. Auf dem Server `curl http://127.0.0.1:8091/website-contact` prüfen. Nur bei konfiguriertem Dienst erscheint `available: true`.
-6. Apache-Module `proxy`, `proxy_http`, `headers` aktivieren. `apache-contact.conf.example` im bestehenden HTTPS-VirtualHost VOR der allgemeinen Backend-Regel einfügen. Den neuen Pfad `/website-contact` zuvor auf bestehende Nutzung prüfen. Apache überschreibt `X-Website-IP` mit der tatsächlichen Client-IP; bei weiteren vorgeschalteten Proxys muss die reale IP-Konfiguration vertrauenswürdig eingerichtet werden. Kein direkter externer Zugang zu Port 8091.
-7. `sudo apache2ctl configtest` und nur bei Erfolg Reload ausführen. Formularstatus über HTTPS prüfen. Dann eine ausdrücklich als Test erkennbare Anfrage absenden und Eingang im Empfängerpostfach kontrollieren. Hier in der Entwicklung wurden keine echten E-Mails versendet.
+Der WSGI-Dienst in `server/contact.py` ist unabhängig von RailSoftware und benötigt keine Datenbank. Er läuft unter einem systemd-DynamicUser an `127.0.0.1:8091`. Apache ordnet ausschließlich `/website-contact` dorthin. Das Postfachpasswort wird bei der Einrichtung verdeckt abgefragt, in einer root-lesbaren Datei auf dem Server verwahrt und über systemd `LoadCredential` an den Prozess gegeben. Keine SMTP-Passwörter im Git, statischen Export oder Kommandozeilenargumenten.
 
-## Verhalten
+- POST als JSON; nur von exakt `https://ctl-software.io-goerlitz.eu`, keine CORS-Freigaben, keine Cookies.
+- Validierung, Größenlimit, feste Themen, Honeypot und Schutz vor Mail-Header-Injection.
+- Fünf Anfragen pro IP-abgeleitetem HMAC-Wert und Stunde; global 100 pro Stunde. Nur RAM, keine persistente Nachrichtendatenbank. Abgelaufene Werte werden bei der nächsten Anfrage entfernt; Neustart löscht alle Werte.
+- Genau ein Gunicorn-Worker mit vier Threads; bei mehreren Instanzen wäre eine gemeinsame Begrenzung erforderlich.
+- TLS-validierte SMTP-Anmeldung. Bei Fehlern keine Erfolgsmeldung und keine Zugangsdaten in Antworten oder Logs.
+- SMTP-Übernahme bestätigt keine externe Zustellung. Keine automatische Wiederholung bei unklarer Verbindung, um unbemerkte Duplikate zu vermeiden.
+- Die Statusabfrage prüft vorhandene Konfiguration und lesbare Credentials, nicht die Live-Erreichbarkeit des SMTP-Servers. Beim Versand werden tatsächliche Fehler angezeigt.
+- In Sites und anderen Hosts bleibt Versand gesperrt. Ohne JavaScript sind Telefon und E-Mail die Alternativen. Bei Änderung der Zieldomain beide Origin-Prüfungen in Frontend und Dienst anpassen.
 
-- POST mit JSON, nur von exakt `https://ctl-software.io-goerlitz.eu`; keine CORS-Freigaben und keine Cookies.
-- Feste Themenauswahl, E-Mail-Prüfung, Längenbegrenzungen, Honeypot, Header-Injection-Schutz. SMTP-Fehler führen niemals zu einer Erfolgsmeldung.
-- Höchstens fünf Anfragen pro IP-abgeleitetem Wert und Stunde, global 100 pro Stunde. Werte werden mit zufälligem HMAC-Schlüssel nur im RAM gehalten und nach Ablauf einer Stunde bei der nächsten Formularanfrage entfernt. Neustart setzt die Begrenzung zurück; die Unit verwendet absichtlich genau einen Worker mit vier Threads. Bei mehreren Instanzen braucht es eine gemeinsame Begrenzung.
-- Keine eigene Nachrichtendatenbank, keine Request-Body-Logs. Apache kann dennoch Zugriffsprotokolle anlegen; Aufbewahrung vor Freigabe festlegen.
-- SMTP-Übernahme ist keine Garantie für die Zustellung. Es gibt keine automatische Wiederholung, um unbemerkte Duplikate zu vermeiden. Bei Verbindungsabbruch kann die tatsächliche Übergabe unklar sein; die Oberfläche meldet das entsprechend.
-- Die Statusabfrage prüft Konfiguration, nicht SMTP-Erreichbarkeit. Bei SMTP-Ausfall erscheint beim Absenden eine Fehlermeldung.
-- Ohne JavaScript bitte den E-Mail-/Telefonkontakt nutzen. Die private Sites-Vorschau bleibt ohne Versand. Bei Änderung der Zieldomain sind Origin in `server/contact.py` und `src/website-assets/site.js` anzupassen.
-
-Vor Aktivierung: Gmail-Verwendung, Drittlandgrundlage und Aufbewahrung mit der Datenschutzerklärung abgleichen; siehe REDAKTION.md. Das bestehende RailSoftware-SMTP wird nicht verändert.
+Das Script testet das Postfach beim ersten Lauf durch eine lokale Testnachricht mit IMAP-Nachweis und DKIM-Signatur. Eine Formularanfrage nach der Veröffentlichung zusätzlich selbst testen; in der Entwicklungsumgebung wurden keine echten Nachrichten versendet.

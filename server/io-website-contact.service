@@ -7,6 +7,9 @@ DynamicUser=yes
 WorkingDirectory=/opt/io-website-contact
 EnvironmentFile=/etc/io-website/contact.env
 Environment=PYTHONDONTWRITEBYTECODE=1
+LoadCredential=smtp-password:/etc/io-website/contact-password
+Environment=SMTP_PASSWORD_FILE=%d/smtp-password
+UMask=0077
 ExecStart=/usr/bin/gunicorn --bind 127.0.0.1:8091 --workers 1 --threads 4 --timeout 30 --limit-request-line 4094 --limit-request-fields 30 contact:application
 Restart=on-failure
 NoNewPrivileges=yes

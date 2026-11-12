@@ -51,4 +51,25 @@ class ContactTests(unittest.TestCase):
             self.assertEqual(self.request()[0],503)
         send.assert_not_called()
 
+
+
+class CredentialTests(unittest.TestCase):
+    def test_password_file_is_used_without_environment_secret(self):
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as tmp:
+            secret=Path(tmp)/'credential';secret.write_text('test-only-password\n')
+            with patch.dict(os.environ, {'SMTP_PASSWORD_FILE':str(secret), 'SMTP_PASSWORD':'wrong'}):
+                self.assertEqual(contact.smtp_password(),'test-only-password')
+    @patch('contact.smtplib.SMTP')
+    def test_fixed_local_recipient_and_verified_tls(self,smtp):
+        with patch.dict(os.environ,{'SMTP_HOST':'smtp.example.org','SMTP_FROM':'info@io-goerlitz.eu','SMTP_SECURITY':'starttls','SMTP_USERNAME':''}):
+            smtp.return_value.__enter__.return_value.send_message.return_value={}
+            contact.send({'name':'Test','email':'reply@example.org','topic':'Software','message':'Testinhalt'})
+        client=smtp.return_value.__enter__.return_value
+        client.starttls.assert_called_once()
+        sent=client.send_message.call_args.args[0]
+        self.assertEqual(sent['To'],'info@io-goerlitz.eu')
+        self.assertEqual(sent['Reply-To'],'reply@example.org')
+
 if __name__=='__main__':unittest.main()

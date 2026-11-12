@@ -1,39 +1,39 @@
-# Rail Software Website / IO-Software-Görlitz
+# IO-Software-Görlitz · Website 0.1.1
 
-Eigenständige statische Präsentation mit separatem Kontakt-Maildienst.
-Pflegebasis: `omueller369/WebSite-IO-Goerlitz.eu`; unabhängig von `omueller369/RailSoftware`.
-Kein Submodul, keine Backend-Kopplung, keine gemeinsamen Builds.
+Eigenständiges Sites-Projekt „Rail Software Website“. Pflegebasis: `omueller369/WebSite-IO-Goerlitz.eu`, unabhängig vom Repository `omueller369/RailSoftware`.
 
-## Seiten
+## Installation und Updates
 
-- `/`: Startseite
-- `/leistungen/`: Beratung, Auftragsentwicklung, Leasing, Wartung und Betreuung
-- `/unternehmen/`: privates Projekt von Oliver Müller, Görlitz
-- `/entwicklung/`: Produktübersicht
-- `/entwicklung/rail-software/`: öffentliche Produktvorstellung, Status „in Entwicklung“
-- `/entwicklung/rail-software/demo-download/`: öffentliche Statusseite ohne geschützte Inhalte; Konten, Demo und Downloads folgen später
-- `/ki-musik/`: persönliche Songs, Unternehmensmusik, Intros und Hintergrundmusik
-- `/kontakt/`, `/impressum/`, `/datenschutz/`
+**[Vollständige Anleitung für Version 0.1.1](docs/INSTALL-UPDATE-0.1.1.md)** · [Komplettes Installationsscript](deploy/io-website.py)
 
-TF-Portal und Verwaltung sind auf keiner öffentlichen Seite verlinkt. Ihre bestehenden Adressen und ihre vorhandene Authentifizierung bleiben unberührt. Eine zusätzliche serverseitige Zugangssperre und persönlich angelegte Demo-Konten sind noch nicht umgesetzt. Niemals vertrauliche Inhalte in `src/` oder `dist/` ablegen: alle statischen Dateien sind abrufbar.
+Die Routine lädt die Website aus GitHub, ergänzt das Postfach `info@io-goerlitz.eu` in der vorhandenen CTL-Server-Mailumgebung und fragt sein Passwort bei der Erstellung verdeckt ab. Sie enthält DNS-Prüfung, Erstinstallation, Updates, Passwortwechsel, Status und Website-Rollback. Sie ist auf den dokumentierten Ubuntu-26.04-/Postfix-/Dovecot-2.4-Stand abgestimmt und ersetzt keine bestehende Serverinstallation.
 
-## Pflege, Logo und Export
+```sh
+sudo python3 deploy/io-website.py install --ref v0.1.1
+# nach erfolgreicher Installation:
+sudo io-website update
+sudo io-website status
+sudo io-website rollback
+```
 
-HTML in `src/`, lokale Assets in `src/website-assets/`. SVG-Logo: `io-logo.svg` (Wortmarke) und `io-mark.svg` (Bildzeichen). Gestaltung: Petrol und Hellgrün, keine externen Fonts, Tracker oder Einbettungen.
+DNS-Einträge werden bei Bedarf ausgegeben und müssen bei STRATO gesetzt werden. Das Script ändert DNS nicht automatisch. Die Einrichtung erfordert einen administrativen Terminalzugang auf dem Zielserver.
+
+## Seiten und Pflege
+
+HTML in `src/`, lokale Assets in `src/website-assets/`; SVG-Logo `io-logo.svg` und Bildzeichen `io-mark.svg`.
+
+Startseite, Leistungen, Unternehmen, Entwicklung → Rail Software, KI-Musik, Kontakt, Impressum und Datenschutz. Die öffentliche Demo-/Download-Seite ist ausschließlich eine Statusseite; persönliche Konten folgen später. Keine öffentlichen TF-/Verwaltungslinks, keine vertraulichen Inhalte in statischen Dateien.
 
 ```sh
 python3 scripts/build.py
 python3 scripts/check_static.py
 python3 -m unittest discover -s server/tests -v
+python3 -m unittest discover -s deploy/tests -v
 node --check src/website-assets/site.js
 ```
 
-`dist/` ist der vollständige statische Export ohne Node-/Python-Laufzeit auf dem Webserver. GitHub Actions stellt diesen Export als Artefakt `rail-software-website-static` bereit; keine automatische Server-Veröffentlichung.
+`dist/` enthält den vollständigen statischen Export. GitHub Actions stellt ihn als Artefakt bereit. Nur der getrennte Formularversand nutzt einen eigenen unprivilegierten Python-Dienst. Kontaktadresse und fester Empfänger: `info@io-goerlitz.eu`, ohne Gmail-Weiterleitung für dieses Postfach. In der privaten Sites-Vorschau bleibt der Formularversand deaktiviert.
 
-Das Kontaktformular braucht für tatsächlichen Versand den unabhängig bereitgestellten WSGI-Maildienst in `server/`. In der privaten Sites-Vorschau und bei fehlender SMTP-Konfiguration bleibt der Versand deaktiviert. Telefon und E-Mail funktionieren als alternative Kontaktwege. Keine Daten werden von der Vorschau an den Produktivserver gesendet.
+[Server-Veröffentlichung](docs/SERVER-VEROEFFENTLICHUNG.md) · [Kontaktbetrieb](docs/KONTAKTFORMULAR.md) · [Redaktion](docs/REDAKTION.md) · [Versionsänderungen](CHANGELOG.md)
 
-## Veröffentlichung
-
-[Server-Anleitung](docs/SERVER-VEROEFFENTLICHUNG.md), [Apache-Website-Fragment](docs/apache-website.conf.example), [Kontaktbetrieb](docs/KONTAKTFORMULAR.md), [Redaktions- und Freigabehinweise](docs/REDAKTION.md).
-
-Sites verwaltet eine getrennte Quellkopie für die private Vorschau. Änderungen im GitHub-Repository müssen für eine neue Sites-Version übernommen werden; keine automatische Synchronisation eingerichtet. Die Strato-Zieldomain wurde nicht umgestellt.
+Sites speichert eine eigene Quellkopie für die private Vorschau. Keine automatische Synchronisation aus GitHub oder automatische Server-Veröffentlichung durch GitHub Actions. Die Strato-Website wird erst durch den Installationslauf auf dem Zielserver umgeschaltet.

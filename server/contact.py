@@ -10,6 +10,7 @@ import ssl
 import threading
 import time
 from email.message import EmailMessage
+from pathlib import Path
 
 ORIGIN = 'https://ctl-software.io-goerlitz.eu'
 TOPICS = {'Software', 'Rail Software', 'KI-Musik'}
@@ -19,7 +20,18 @@ _BUCKETS = {}
 _LOCK = threading.Lock()
 
 
+def smtp_password():
+    path = os.environ.get('SMTP_PASSWORD_FILE')
+    return Path(path).read_text().rstrip('\n') if path else os.environ.get('SMTP_PASSWORD', '')
+
+
 def ready():
+    if os.environ.get('SMTP_USERNAME'):
+        try:
+            if not smtp_password():
+                return False
+        except OSError:
+            return False
     return (all(os.environ.get(k) for k in ('SMTP_HOST', 'SMTP_FROM'))
             and os.environ.get('SMTP_SECURITY') in ('ssl', 'starttls')
             and bool(EMAIL.fullmatch(os.environ.get('SMTP_FROM', ''))))
@@ -44,7 +56,7 @@ def allowed(ip):
 def send(data):
     msg = EmailMessage()
     msg['From'] = os.environ['SMTP_FROM']
-    msg['To'] = 'omueller369@gmail.com'
+    msg['To'] = 'info@io-goerlitz.eu'
     msg['Reply-To'] = data['email']
     msg['Subject'] = 'Website-Anfrage: ' + data['topic']
     msg.set_content('Name: ' + data['name'] + '\nE-Mail: ' + data['email']
@@ -60,7 +72,7 @@ def send(data):
             smtp.starttls(context=context)
             smtp.ehlo()
         if os.environ.get('SMTP_USERNAME'):
-            smtp.login(os.environ['SMTP_USERNAME'], os.environ.get('SMTP_PASSWORD', ''))
+            smtp.login(os.environ['SMTP_USERNAME'], smtp_password())
         refused = smtp.send_message(msg)
         if refused:
             raise smtplib.SMTPException('Recipient refused')
