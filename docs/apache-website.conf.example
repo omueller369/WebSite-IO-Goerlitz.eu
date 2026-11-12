@@ -1,0 +1,19 @@
+# In den BESTEHENDEN HTTPS-VirtualHost einfügen, vor jeder allgemeinen
+# ProxyPass-Regel. Vorher bestehende Alias-/Rewrite-/Location-Regeln prüfen.
+# Kein kompletter VirtualHost: TLS, Logs und Backend-Ziel bleiben unverändert.
+
+# Nur diese beiden Dateipfade und der eigene Asset-Namensraum werden ausgenommen.
+ProxyPassMatch "^/(?:index\.html)?$" "!"
+ProxyPass "/website-assets/" "!"
+
+AliasMatch "^/(?:index\.html)?$" "/var/www/rail-website/current/index.html"
+Alias "/website-assets/" "/var/www/rail-website/current/website-assets/"
+<Directory "/var/www/rail-website/">
+    Require all granted
+    AllowOverride None
+    Options -Indexes -ExecCGI
+</Directory>
+
+# Danach ALLE vorhandenen ProxyPass/ProxyPassReverse- und sonstigen
+# Software-Regeln beibehalten, einschließlich der allgemeinen Backend-Regel.
+# Nicht DocumentRoot, FallbackResource oder globale Rewrite-Regeln ersetzen.
