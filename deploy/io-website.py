@@ -28,7 +28,7 @@ import urllib.request
 import urllib.error
 from contextlib import contextmanager
 
-VERSION = '0.2.1'
+VERSION = '0.2.2'
 REPO = 'https://github.com/omueller369/WebSite-IO-Goerlitz.eu.git'
 HOST = 'ctl-software.io-goerlitz.eu'
 DOMAIN = 'io-goerlitz.eu'

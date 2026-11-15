@@ -1,4 +1,4 @@
-# IO-Software-Görlitz · Website 0.2.1
+# IO-Software-Görlitz · Website 0.2.2
 
 Eigenständiges Sites-Projekt „Rail Software Website“. Pflegebasis: `omueller369/WebSite-IO-Goerlitz.eu`, unabhängig vom Repository `omueller369/RailSoftware`.
 
@@ -13,7 +13,7 @@ Eigenständiges Sites-Projekt „Rail Software Website“. Pflegebasis: `omuelle
 Die Routine lädt die Website aus GitHub, ergänzt das Postfach `info@io-goerlitz.eu` in der vorhandenen CTL-Server-Mailumgebung und fragt sein Passwort bei der Erstellung verdeckt ab. Sie enthält DNS-Prüfung, Erstinstallation, Updates, Passwortwechsel, Status und Website-Rollback. Sie ist auf den dokumentierten Ubuntu-26.04-/Postfix-/Dovecot-2.4-Stand abgestimmt und ersetzt keine bestehende Serverinstallation.
 
 ```sh
-sudo python3 deploy/io-website.py install --ref v0.2.1
+sudo python3 deploy/io-website.py install --ref v0.2.2
 # nach erfolgreicher Installation:
 sudo io-website update
 sudo io-website status
@@ -41,3 +41,5 @@ node --check src/website-assets/site.js
 [Server-Veröffentlichung](docs/SERVER-VEROEFFENTLICHUNG.md) · [Kontaktbetrieb](docs/KONTAKTFORMULAR.md) · [Redaktion](docs/REDAKTION.md) · [Versionsänderungen](CHANGELOG.md)
 
 Sites speichert eine eigene Quellkopie für die private Vorschau. Keine automatische Synchronisation aus GitHub oder automatische Server-Veröffentlichung durch GitHub Actions. Die Strato-Website wird erst durch den Installationslauf auf dem Zielserver umgeschaltet.
+
+Optionaler Chromium-Layouttest mit installiertem Playwright: `python3 scripts/check_portal_layout.py`. Prüft Download und Kundenverwaltung bei 320, 375, 768, 1440, 1920, 2560 und 3840 Pixeln ohne Produktionskonten oder laufenden Webserver.

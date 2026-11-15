@@ -1,5 +1,13 @@
 # Änderungen
 
+## 0.2.2
+
+- Behebt extrem schmale Download- und Verwaltungsspalten auf großen Bildschirmen durch einen eigenen zentrierten Portal-Container.
+- Verhindert dieselbe Verengung auch bei öffentlichen Seitentiteln.
+- Lesbare Überschriften, Karten und Buttons von Mobil- bis Ultrawide-Ansichten; versionierte CSS-Adresse verhindert die Wiederverwendung alter Layout-Dateien.
+- Keine Änderungen an Anmeldung, Konten oder Passwörtern.
+
+
 ## 0.2.1
 
 - Behebt „Ungültiger Ursprung“ bei Formular-Anmeldungen durch `Referrer-Policy: same-origin`.

@@ -113,7 +113,7 @@ def layout(title, body, user=None):
     if user and user['role']=='admin': links += '<a href="/kundenverwaltung/">Kundenverwaltung</a>'
     return ('<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
       '<meta name="robots" content="noindex,nofollow"><title>'+e(title)+' · IO-Software-Görlitz</title>'
-      '<link rel="stylesheet" href="/website-assets/site.css"></head><body><header><a class="brand" href="/">IO-Software-Görlitz</a><nav>'+links+'</nav></header>'
+      '<link rel="stylesheet" href="/website-assets/site.css?v=0.2.2"></head><body class="portal-page"><header><a class="brand" href="/">IO-Software-Görlitz</a><nav>'+links+'</nav></header>'
       '<main id="inhalt"><section class="page-intro"><p class="eyebrow">GESCHÜTZTER KUNDENBEREICH</p><h1>'+e(title)+'</h1></section>'
       '<section class="section no-top portal-content">'+body+'</section></main><footer><a href="/">Startseite</a><a href="/datenschutz/">Datenschutz</a><a href="/kontakt/">Kontakt</a></footer></body></html>')
 

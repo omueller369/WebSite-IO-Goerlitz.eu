@@ -1,4 +1,4 @@
-# Download und Kundenverwaltung · Version 0.2.1
+# Download und Kundenverwaltung · Version 0.2.2
 
 Öffentliche Präsentationsseiten bleiben statisch exportierbar. Download-Anmeldung und Kundenverwaltung laufen in einem getrennten Serverdienst mit eigener SQLite-Datenbank. Keine Kopplung an TF-Konten, die RailSoftware-Datenbank oder Postfachpasswörter.
 
@@ -7,11 +7,11 @@
 **Für dieses Funktionsupdate zuerst die neue Script-Datei herunterladen.** Der ältere Installer kann den zusätzlichen Dienst noch nicht einrichten.
 
 ```sh
-curl -fL https://raw.githubusercontent.com/omueller369/WebSite-IO-Goerlitz.eu/v0.2.1/deploy/io-website.py -o io-website.py
-sudo python3 io-website.py update --ref v0.2.1
+curl -fL https://raw.githubusercontent.com/omueller369/WebSite-IO-Goerlitz.eu/v0.2.2/deploy/io-website.py -o io-website.py
+sudo python3 io-website.py update --ref v0.2.2
 ```
 
-Ist die vorherige Installation noch nicht erfolgreich abgeschlossen, stattdessen `sudo python3 io-website.py install --ref v0.2.1` ausführen. Die bekannte Mail-/DNS-Vorprüfung gilt weiterhin. Bei einer funktionierenden Installation genügt `update`; keine neuen DNS-Einträge nötig.
+Ist die vorherige Installation noch nicht erfolgreich abgeschlossen, stattdessen `sudo python3 io-website.py install --ref v0.2.2` ausführen. Die bekannte Mail-/DNS-Vorprüfung gilt weiterhin. Bei einer funktionierenden Installation genügt `update`; keine neuen DNS-Einträge nötig.
 
 Der neue Installer fragt bei erstmaliger Einrichtung das Download-Admin-Passwort zweimal verdeckt im Terminal ab:
 
@@ -82,3 +82,7 @@ Nach dem Update Admin-Anmeldung, Kundenanlage, ersten Passwortwechsel, normalen 
 ## Login-Korrektur 0.2.1
 
 Die geschützten Seiten verwenden `Referrer-Policy: same-origin`, damit Browser eigene Formular-Anmeldungen nicht durch eine unterdrückte Herkunft blockieren. Bei fehlendem Origin-Header werden ausschließlich eine passende HTTPS-Referer-Adresse oder browserseitige Same-Origin-Metadaten akzeptiert; CSRF-Prüfungen bleiben erforderlich. Explizites `Origin: null`, fremde Ursprünge und nicht prüfbare Anfragen werden abgewiesen. Nach dem Update die Anmeldeseite neu laden. Konten und Passwörter bleiben erhalten.
+
+## Layout-Korrektur 0.2.2
+
+Der geschützte Bereich verwendet einen eigenen zentrierten Container ohne die breitenabhängigen Außenabstände der Präsentationsseiten. Damit bleiben Download-Karte, Überschriften und Formulare auch auf Ultrawide-Monitoren ausreichend breit. Der HTML-Link enthält eine CSS-Versionsnummer, damit Browser die neue Layout-Datei abrufen. Login und Kundendaten bleiben unverändert.
