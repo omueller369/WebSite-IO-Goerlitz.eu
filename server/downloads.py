@@ -196,12 +196,33 @@ def rate_allowed(db,env,address):
     return allowed
 
 
+def trusted_form_origin(env):
+    # Never derive the allowed origin from attacker-controlled Host/Forwarded headers.
+    def matches(value, referer=False):
+        try:
+            candidate=urlsplit(value)
+            expected=urlsplit(ORIGIN)
+            return (candidate.scheme==expected.scheme and candidate.hostname==expected.hostname
+                    and (candidate.port or 443)==(expected.port or 443)
+                    and not candidate.username and not candidate.password
+                    and (referer or not (candidate.path or candidate.query or candidate.fragment)))
+        except (ValueError,TypeError):
+            return False
+    if env.get('HTTP_SEC_FETCH_SITE') in ('cross-site','same-site'):return False
+    origin=env.get('HTTP_ORIGIN')
+    if origin:return matches(origin)  # Explicit null or foreign origins never fall back.
+    referer=env.get('HTTP_REFERER')
+    if referer:return matches(referer,referer=True)
+    # Browser-controlled Fetch Metadata is a fallback; CSRF tokens are still mandatory.
+    return env.get('HTTP_SEC_FETCH_SITE')=='same-origin'
+
+
 def application(env,start_response):
     def reply(status,body='',headers=(),title=None,user=None):
         if title:body=layout(title,body,user)
         encoded=body.encode()
         base=[('Content-Type','text/html; charset=utf-8'),('Content-Length',str(len(encoded))),('Cache-Control','no-store, private'),
-          ('X-Content-Type-Options','nosniff'),('Referrer-Policy','no-referrer'),('X-Frame-Options','DENY'),('X-Robots-Tag','noindex, nofollow'),
+          ('X-Content-Type-Options','nosniff'),('Referrer-Policy','same-origin'),('X-Frame-Options','DENY'),('X-Robots-Tag','noindex, nofollow'),
           ('Content-Security-Policy',"default-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")]
         start_response(status,base+list(headers));return [encoded]
     def redirect(path,headers=()):return reply('303 See Other',headers=[('Location',path),*headers])
@@ -222,7 +243,7 @@ def application(env,start_response):
         user=current_user(db,env)
         data={}
         if method=='POST':
-            if env.get('HTTP_ORIGIN')!=ORIGIN:return reply('403 Forbidden','Ungültiger Ursprung.')
+            if not trusted_form_origin(env):return reply('403 Forbidden','Ungültiger Ursprung.')
             try:
                 length=int(env.get('CONTENT_LENGTH','0'))
                 if not 0<length<=16384:raise ValueError()

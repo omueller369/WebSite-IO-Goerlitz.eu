@@ -19,11 +19,14 @@ NEW_PASSWORD='Customer-new-password-456'
 
 class Client:
     def __init__(self):self.cookies={};self.set_cookies=[]
-    def request(self,path='/download/',method='GET',data=None,origin=app.ORIGIN):
+    def request(self,path='/download/',method='GET',data=None,origin=app.ORIGIN,referer=None,fetch_site=None):
         raw=urlencode(data or {}).encode()
         env={'PATH_INFO':path,'REQUEST_METHOD':method,'HTTP_ORIGIN':origin,
              'HTTP_COOKIE':'; '.join(k+'='+v for k,v in self.cookies.items()),'REMOTE_ADDR':'127.0.0.1',
              'CONTENT_TYPE':'application/x-www-form-urlencoded','CONTENT_LENGTH':str(len(raw)),'wsgi.input':io.BytesIO(raw)}
+        if origin is None:env.pop('HTTP_ORIGIN',None)
+        if referer is not None:env['HTTP_REFERER']=referer
+        if fetch_site is not None:env['HTTP_SEC_FETCH_SITE']=fetch_site
         result=[]
         body=b''.join(app.application(env,lambda status,headers:result.append((status,headers)))).decode()
         for key,value in result[0][1]:
@@ -153,6 +156,24 @@ class DownloadTests(unittest.TestCase):
         with app.connection() as db:db.execute('UPDATE sessions SET expires=0')
         self.assertEqual(self.admin.request('/download/android'),303)
         self.assertEqual(self.admin.headers['Location'],'/download/')
+    def test_referrer_policy_preserves_same_origin_form_posts(self):
+        self.client.request()
+        self.assertEqual(self.client.headers['Referrer-Policy'],'same-origin')
+    def test_missing_origin_can_use_trusted_referer_with_csrf(self):
+        self.client.request();csrf=self.client.csrf()
+        data={'email':app.ADMIN,'password':ADMIN_PASSWORD,'csrf':csrf}
+        self.assertEqual(self.client.request('/download/anmelden','POST',data,origin=None,referer=app.ORIGIN+'/download/'),303)
+    def test_missing_origin_can_use_browser_same_origin_metadata_with_csrf(self):
+        self.client.request();csrf=self.client.csrf()
+        data={'email':app.ADMIN,'password':ADMIN_PASSWORD,'csrf':csrf}
+        self.assertEqual(self.client.request('/download/anmelden','POST',data,origin=None,fetch_site='same-origin'),303)
+    def test_null_foreign_and_unverifiable_origins_stay_blocked(self):
+        self.client.request();data={'email':app.ADMIN,'password':ADMIN_PASSWORD,'csrf':self.client.csrf()}
+        for headers in [dict(origin='null',fetch_site='same-origin'),dict(origin='https://other.example',referer=app.ORIGIN+'/download/',fetch_site='same-origin'),dict(origin=None),dict(origin=None,referer='https://ctl-software.io-goerlitz.eu.evil.example/download/'),dict(origin=None,fetch_site='same-site'),dict(origin=None,referer=app.ORIGIN+'/download/',fetch_site='cross-site')]:
+            self.assertEqual(self.client.request('/download/anmelden','POST',data,**headers),403)
+    def test_origin_fallback_still_requires_csrf(self):
+        self.client.request()
+        self.assertEqual(self.client.request('/download/anmelden','POST',{'email':app.ADMIN,'password':ADMIN_PASSWORD,'csrf':'bad'},origin=None,fetch_site='same-origin'),403)
     def test_customer_name_html_escaped(self):
         self.admin_login();csrf=self.admin.csrf()
         self.admin.request('/kundenverwaltung/kunde','POST',{'csrf':csrf,'email':'x@example.org','name':'<script>alert(1)</script>','password':CUSTOMER_PASSWORD,'confirm':CUSTOMER_PASSWORD})

@@ -1,4 +1,4 @@
-# IO-Software-Görlitz · Website 0.2.0
+# IO-Software-Görlitz · Website 0.2.1
 
 Eigenständiges Sites-Projekt „Rail Software Website“. Pflegebasis: `omueller369/WebSite-IO-Goerlitz.eu`, unabhängig vom Repository `omueller369/RailSoftware`.
 
@@ -13,7 +13,7 @@ Eigenständiges Sites-Projekt „Rail Software Website“. Pflegebasis: `omuelle
 Die Routine lädt die Website aus GitHub, ergänzt das Postfach `info@io-goerlitz.eu` in der vorhandenen CTL-Server-Mailumgebung und fragt sein Passwort bei der Erstellung verdeckt ab. Sie enthält DNS-Prüfung, Erstinstallation, Updates, Passwortwechsel, Status und Website-Rollback. Sie ist auf den dokumentierten Ubuntu-26.04-/Postfix-/Dovecot-2.4-Stand abgestimmt und ersetzt keine bestehende Serverinstallation.
 
 ```sh
-sudo python3 deploy/io-website.py install --ref v0.2.0
+sudo python3 deploy/io-website.py install --ref v0.2.1
 # nach erfolgreicher Installation:
 sudo io-website update
 sudo io-website status

@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.2.1
+
+- Behebt „Ungültiger Ursprung“ bei Formular-Anmeldungen durch `Referrer-Policy: same-origin`.
+- Sichere Herkunftsprüfung bei fehlendem Origin-Header über passende Referer- oder Fetch-Metadata-Angaben; CSRF-Schutz bleibt bestehen.
+- Fremde und explizit unbekannte Ursprünge bleiben gesperrt. Keine Änderungen an bestehenden Konten oder Passwörtern.
+
+
 ## 0.2.0
 
 - Download-Link in der Kopfzeile und serverseitig geschützter Downloadbereich.
