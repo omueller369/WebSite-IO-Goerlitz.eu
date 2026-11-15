@@ -1,5 +1,16 @@
 # Änderungen
 
+## 0.2.0
+
+- Download-Link in der Kopfzeile und serverseitig geschützter Downloadbereich.
+- Admin-Konto `omueller369@gmail.com`; verdeckte Passwortabfrage im aktualisierten Installations-/Update-Script.
+- Nur für den Admin erreichbare Kundenverwaltung mit Kontenanlage, Sperre, Freischaltung und Passwort-Zurücksetzung.
+- Erster Passwortwechsel für Kunden, widerrufbare Sitzungen, CSRF-Schutz und begrenzte Anmeldeversuche.
+- Aktueller Android-Link automatisch aus GitHub-Releases (inklusive gekennzeichneter Testversionen), alternativ manuell durch den Admin.
+- Eigener unprivilegierter Download-Dienst mit persistenter SQLite-Datenbank; getrennt von RailSoftware und Mailkonten.
+- Passende Runtime-Sicherung für Website-Rollbacks sowie ergänzte Datenschutztexte.
+
+
 ## Installer 0.1.2 (Website bleibt 0.1.1)
 
 - Gunicorn-Start über `/usr/bin/python3 -m gunicorn`, ohne CLI-Wrapper vorauszusetzen.

@@ -1,0 +1,23 @@
+[Unit]
+Description=IO website protected customer downloads
+After=network.target
+
+[Service]
+DynamicUser=yes
+WorkingDirectory=/opt/io-website-contact
+Environment=PYTHONDONTWRITEBYTECODE=1
+LoadCredential=download-admin:/etc/io-website/download-admin.json
+Environment=PORTAL_ADMIN_FILE=%d/download-admin
+StateDirectory=io-website-downloads
+StateDirectoryMode=0700
+UMask=0077
+ExecStart=/usr/bin/python3 -m gunicorn --bind 127.0.0.1:8092 --workers 1 --threads 4 --timeout 30 --limit-request-line 4094 --limit-request-fields 30 downloads:application
+Restart=on-failure
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+[Install]
+WantedBy=multi-user.target

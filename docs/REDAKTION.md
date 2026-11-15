@@ -1,4 +1,4 @@
-# Redaktion und öffentlicher Start · 0.1.1
+# Redaktion und öffentlicher Start · 0.2.0
 
 ## Produktquelle
 
@@ -14,8 +14,12 @@ Kontaktadresse ist jetzt `info@io-goerlitz.eu`. Das neue Konto speichert Nachric
 
 Die Datenschutzerklärung ist auf diesen Betrieb abgestimmt: STRATO-Hosting, Kontaktverarbeitung, lokale Mailzustellung, getrennte Website-Zugriffslogs mit sieben Tagen Rotation, keine Tracker, Drittanbieter-Einbettungen oder externen Schriftarten. Vertrag zur Auftragsverarbeitung mit STRATO und tatsächliche Servereinstellungen sind anhand des eigenen Hostingvertrags zu prüfen. Fehlerprotokolle und gegebenenfalls zusätzliche vorgeschaltete Proxys müssen im realen Betrieb berücksichtigt werden. Es wird keine juristische Zertifizierung behauptet.
 
-Die private Sites-Vorschau hat plattformeigenen Zugang und versendet keine Formulare. Keine Demo- oder Zugangsdaten in den statischen Export legen. Persönliche Demo-Konten und der geschützte Bereich kommen später; vorhandene Portale behalten bis dahin ihre bestehende Authentifizierung.
+Die private Sites-Vorschau hat plattformeigenen Zugang und versendet keine Formulare. Keine Demo- oder Zugangsdaten in den statischen Export legen. Der neue Downloadbereich hat eine eigene Anmeldung und ausschließlich dem Admin vorbehaltene Kundenverwaltung. Persönliche Demo-Funktionen kommen später; vorhandene Portale behalten ihre bestehende Authentifizierung.
 
 ## KI-Musik und Logo
 
 Eingesetzten KI-Anbieter, Nutzungsrechte und Verarbeitung personenbezogener Inhalte vor Beauftragung festlegen. Keine Hörbeispiele, Preise, Kundenreferenzen oder exklusiven Rechte wurden erfunden. Das IO-Zeichen ist ein erster SVG-Entwurf in Petrol/Hellgrün; vor einer Markenanmeldung Kennzeichenrechte prüfen.
+
+## Download 0.2.0
+
+Die persönliche Download-Anmeldung speichert Kundenname, E-Mail, Passwort-Hash, Status und letzte Anmeldung in einer separaten Serverdatenbank. Notwendige Sitzungscookies und Anmeldeschutz sind in der Datenschutzerklärung beschrieben. Initialer Android-Link wurde am 15. November 2026 aus Release android-test-22 (0.26.52) ermittelt; die Automatik aktualisiert über öffentliche Release-Metadaten. Eine öffentliche APK wird durch den Seitenschutz nicht privat.

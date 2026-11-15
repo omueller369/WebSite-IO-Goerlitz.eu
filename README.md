@@ -1,6 +1,10 @@
-# IO-Software-Görlitz · Website 0.1.1
+# IO-Software-Görlitz · Website 0.2.0
 
 Eigenständiges Sites-Projekt „Rail Software Website“. Pflegebasis: `omueller369/WebSite-IO-Goerlitz.eu`, unabhängig vom Repository `omueller369/RailSoftware`.
+
+## Download und Kundenverwaltung
+
+[Update und Bedienung für Version 0.2.0](docs/DOWNLOAD-KUNDENBEREICH.md): Download-Link im Kopf, Anmeldung per E-Mail/Passwort, ausschließlich für Oliver Müller erreichbare Kundenverwaltung, Freischalten/Sperren/Passwort-Zurücksetzung und aktueller Android-Link aus GitHub oder manueller Vorgabe. Admin-Passwort wird im neuen Update-Script verdeckt abgefragt. **Für den Sprung von 0.1.x die neue Script-Datei herunterladen**, nicht nur den alten Installer starten.
 
 ## Installation und Updates
 
@@ -9,7 +13,7 @@ Eigenständiges Sites-Projekt „Rail Software Website“. Pflegebasis: `omuelle
 Die Routine lädt die Website aus GitHub, ergänzt das Postfach `info@io-goerlitz.eu` in der vorhandenen CTL-Server-Mailumgebung und fragt sein Passwort bei der Erstellung verdeckt ab. Sie enthält DNS-Prüfung, Erstinstallation, Updates, Passwortwechsel, Status und Website-Rollback. Sie ist auf den dokumentierten Ubuntu-26.04-/Postfix-/Dovecot-2.4-Stand abgestimmt und ersetzt keine bestehende Serverinstallation.
 
 ```sh
-sudo python3 deploy/io-website.py install --ref v0.1.2
+sudo python3 deploy/io-website.py install --ref v0.2.0
 # nach erfolgreicher Installation:
 sudo io-website update
 sudo io-website status
@@ -22,7 +26,7 @@ DNS-Einträge werden bei Bedarf ausgegeben und müssen bei STRATO gesetzt werden
 
 HTML in `src/`, lokale Assets in `src/website-assets/`; SVG-Logo `io-logo.svg` und Bildzeichen `io-mark.svg`.
 
-Startseite, Leistungen, Unternehmen, Entwicklung → Rail Software, KI-Musik, Kontakt, Impressum und Datenschutz. Die öffentliche Demo-/Download-Seite ist ausschließlich eine Statusseite; persönliche Konten folgen später. Keine öffentlichen TF-/Verwaltungslinks, keine vertraulichen Inhalte in statischen Dateien.
+Startseite, Leistungen, Unternehmen, Entwicklung → Rail Software, KI-Musik, Kontakt, Impressum und Datenschutz. Der Downloadbereich wird serverseitig geschützt; die statische Vorschau enthält keine Kundenkonten. Eine separate Demo folgt später. Keine öffentlichen TF-/Verwaltungslinks, keine vertraulichen Inhalte in statischen Dateien.
 
 ```sh
 python3 scripts/build.py

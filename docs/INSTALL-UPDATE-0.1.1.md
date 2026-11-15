@@ -1,3 +1,5 @@
+> Aktueller Funktionsstand 0.2.0: Für den geschützten Downloadbereich zuerst [DOWNLOAD-KUNDENBEREICH.md](DOWNLOAD-KUNDENBEREICH.md) lesen und die dort angegebene neue Script-Datei verwenden. Die folgenden Details beschreiben die ursprüngliche Mail-/Website-Einrichtung.
+
 > Installer 0.1.2 behebt den Gunicorn-Start. Die Website bleibt Version 0.1.1. Zum Fortsetzen die neue Script-Datei laden und `install --ref v0.1.2` ausführen.
 
 # Version 0.1.1: Website, Postfach und Updates

@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 
 root=Path(__file__).resolve().parents[1]/'dist'
 pages=list(root.rglob('*.html'))
-assert len(pages)==10, len(pages)
+assert len(pages)==12, len(pages)
 class Check(HTMLParser):
     def __init__(self):
         super().__init__(); self.links=[]; self.ids=set(); self.h1=0
@@ -19,6 +19,8 @@ class Check(HTMLParser):
 for page in pages:
     parser=Check(); parser.feed(page.read_text())
     assert parser.h1==1,(page,parser.h1)
+    assert '/download/' in parser.links,(page,'Download navigation missing')
+    assert not any('.apk' in link.lower() for link in parser.links),(page,'Public APK link')
     for link in parser.links:
         u=urlsplit(link)
         if u.scheme or u.netloc:continue

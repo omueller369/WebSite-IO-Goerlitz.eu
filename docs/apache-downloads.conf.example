@@ -1,0 +1,8 @@
+# Dedicated new namespaces; never reuse /admin (RailSoftware).
+ProxyPassMatch "^/(download|kundenverwaltung)(/.*)?$" "http://127.0.0.1:8092/$1$2" connectiontimeout=3 timeout=30
+ProxyPassReverse "/download" "http://127.0.0.1:8092/download"
+ProxyPassReverse "/kundenverwaltung" "http://127.0.0.1:8092/kundenverwaltung"
+<LocationMatch "^/(download|kundenverwaltung)(/|$)">
+    RequestHeader set X-Website-IP "expr=%{REMOTE_ADDR}"
+    LimitRequestBody 16384
+</LocationMatch>

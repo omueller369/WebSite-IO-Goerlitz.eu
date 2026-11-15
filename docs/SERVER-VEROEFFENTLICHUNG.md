@@ -1,6 +1,6 @@
 # Getrennte Server-Veröffentlichung
 
-Ziel: https://ctl-software.io-goerlitz.eu/ · Version 0.1.1
+Ziel: https://ctl-software.io-goerlitz.eu/ · Version 0.2.0
 
 **Die vollständige Installations- und Update-Anleitung steht in [INSTALL-UPDATE-0.1.1.md](INSTALL-UPDATE-0.1.1.md).** Das zugehörige Script ist [deploy/io-website.py](../deploy/io-website.py).
 
@@ -25,3 +25,7 @@ Das Script sichert geänderte Konfigurationen, prüft Apache vor dem Reload, ver
 Nach der Installation Website auf Desktop und Mobilgerät prüfen, eine Kontaktanfrage senden und beantworten sowie TF-/Admin-Anmeldung, PWA und betriebliche Abläufe mit einem Testkonto kontrollieren. Auch einen Browser mit bereits installiertem Portal-Service-Worker verwenden: ein vorhandener Root-Scope-Cache kann eine ältere Startseite anzeigen. Der Installer entfernt oder verändert keine vorhandenen Software-Service-Worker.
 
 Die Server-Konfiguration muss zum dokumentierten RailSoftware-Stand passen; bei Abweichungen stoppt die Routine. Eine generische PHP-/Plesk-/ISPConfig-Installation wird nicht automatisch angepasst.
+
+## Erweiterung Download
+
+Für den neuen geschützten Downloadbereich und die Kundenverwaltung gilt [DOWNLOAD-KUNDENBEREICH.md](DOWNLOAD-KUNDENBEREICH.md). Die zusätzlichen Namensräume `/download` und `/kundenverwaltung` gehen vollständig an einen eigenen Serverdienst. Sie werden nicht durch einen statischen Alias geschützt. Die ursprüngliche Software-Administration `/admin` wird nicht wiederverwendet.

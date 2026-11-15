@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """IO Website installer/updater for the existing RailSoftware Ubuntu mail/Apache host.
-Never runs RailSoftware setup.sh. No database, DNS, firewall or TLS replacements.
+Never runs RailSoftware setup.sh. No RailSoftware database, DNS, firewall or TLS replacements.
 """
 import argparse
 import fcntl
 import getpass
+import hashlib
 import grp
 import imaplib
 import ipaddress
@@ -27,7 +28,7 @@ import urllib.request
 import urllib.error
 from contextlib import contextmanager
 
-VERSION = '0.1.2'
+VERSION = '0.2.0'
 REPO = 'https://github.com/omueller369/WebSite-IO-Goerlitz.eu.git'
 HOST = 'ctl-software.io-goerlitz.eu'
 DOMAIN = 'io-goerlitz.eu'
@@ -439,7 +440,7 @@ def fetch_source(ref):
 def validate_source(source):
     # No code from GitHub is executed as root. Static export is a verified file copy.
     required=['src/index.html','server/contact.py','server/io-website-contact.service',
-              'docs/apache-website.conf.example','docs/apache-contact.conf.example','deploy/io-website.py','VERSION']
+              'docs/apache-website.conf.example','docs/apache-contact.conf.example','docs/apache-downloads.conf.example','server/downloads.py','server/io-website-downloads.service','deploy/io-website.py','VERSION']
     for name in required:
         if not safe_path(source/name).is_file():raise Stop('Quelldatei fehlt: '+name)
     for folder in ('src','server','deploy'):
@@ -487,6 +488,23 @@ def ensure_gunicorn():
     run(['/usr/bin/python3','-m','gunicorn','--version'])
 
 
+def download_admin(reset=False):
+    path=ETC/'download-admin.json'
+    if path.exists() and not reset:
+        value=json.loads(read(path))
+        if value.get('email')!='omueller369@gmail.com' or not re.fullmatch(r'scrypt\$[a-f0-9]{32}\$[a-f0-9]{128}',value.get('password','')):
+            raise Stop('Ungültige Download-Admin-Konfiguration; admin-password verwenden.')
+        return
+    if not sys.stdin.isatty():raise Stop('Ein Terminal ist für die Admin-Passwortabfrage erforderlich.')
+    first=getpass.getpass('Download-Admin-Passwort für omueller369@gmail.com (mind. 12 Zeichen): ')
+    second=getpass.getpass('Download-Admin-Passwort wiederholen: ')
+    if first!=second or not 12<=len(first)<=256 or any(c in first for c in '\r\n\x00'):
+        raise Stop('Admin-Passwörter müssen übereinstimmen und 12 bis 256 Zeichen lang sein.')
+    salt=secrets.token_hex(16)
+    digest=hashlib.scrypt(first.encode(),salt=salt.encode(),n=16384,r=8,p=1,maxmem=64*1024*1024).hex()
+    atomic(path,json.dumps({'email':'omueller369@gmail.com','password':'scrypt$'+salt+'$'+digest})+'\n',0o600)
+
+
 def service_config(source):
     # Runtime code is unprivileged. Password passed through systemd credentials, not env or argv.
     text=read(source/'server/io-website-contact.service')
@@ -518,6 +536,16 @@ def website_logging(text):
     return text,'\nCustomLog '+expected+' env=!io_website\n'
 
 
+def wait_downloads():
+    for _ in range(15):
+        try:
+            with urllib.request.urlopen('http://127.0.0.1:8092/download/health',timeout=2) as response:
+                if response.status==200:return
+        except Exception:pass
+        time.sleep(1)
+    raise Stop('Download-Dienst nicht bereit. Prüfen: journalctl -u io-website-downloads -n 60 --no-pager')
+
+
 def publish(source,sha,vhost):
     version=validate_source(source)
     stamp=time.strftime('%Y%m%d-%H%M%S')+'-'+sha[:12]
@@ -531,6 +559,7 @@ def publish(source,sha,vhost):
     current=WEB/'current'
     old=os.readlink(current) if current.is_symlink() else None
     if current.exists() and old is None:raise Stop('Website-current ist ein Verzeichnis. Keine Ersetzung.')
+    old_downloads=subprocess.run(['systemctl','is-active','io-website-downloads'],capture_output=True,text=True).stdout.strip()
     old_contact=subprocess.run(['systemctl','is-active','io-website-contact'],capture_output=True,text=True).stdout.strip()
     before={path:probe(path) for path in PROTECTED}
     if not (ETC/'state.json').exists():
@@ -540,14 +569,22 @@ def publish(source,sha,vhost):
                 raise Stop('Mögliche bestehende Route /'+path+' ('+status+'). Vor Zuordnung prüfen.')
             if status in ('307','308') and not probe('/'+path+'/').startswith('404|'):
                 raise Stop('Mögliche bestehende Route /'+path+'/ erkannt.')
+    old_state=json.loads(read(ETC/'state.json')) if (ETC/'state.json').exists() else {}
+    if not old_state.get('downloads_enabled'):
+        for path in ('/download','/kundenverwaltung'):
+            status=probe(path).split('|')[0]
+            if status not in ('404','307','308') or (status in ('307','308') and not probe(path+'/').startswith('404|')):
+                raise Stop('Neue Download-Route ist bereits anderweitig belegt: '+path)
     try:
         SERVICE.mkdir(parents=True,exist_ok=True);SERVICE.chmod(0o755)
         tx.write(SERVICE/'contact.py',read(source/'server/contact.py'))
+        tx.write(SERVICE/'downloads.py',read(source/'server/downloads.py'))
+        tx.write('/etc/systemd/system/io-website-downloads.service',read(source/'server/io-website-downloads.service'))
         tx.write('/etc/systemd/system/io-website-contact.service',service_config(source))
         tx.write(ETC/'contact.env','SMTP_HOST='+HOST+'\nSMTP_PORT=587\nSMTP_SECURITY=starttls\nSMTP_FROM='+ADDRESS+'\nSMTP_USERNAME='+ADDRESS+'\n',0o600)
         # Dedicated log: 7 days, no query, referrer, user agent or form body.
-        apache=read(source/'docs/apache-website.conf.example')+'\n'+read(source/'docs/apache-contact.conf.example')
-        apache+='\nSetEnvIf Request_URI "^/(?:$|index\\.html$|website-assets/|website-contact$|'+ '|'.join(re.escape(x)+r'(?:/index\.html|/)?$' for x in PAGES)+')" io_website\n'
+        apache=read(source/'docs/apache-downloads.conf.example')+'\n'+read(source/'docs/apache-website.conf.example')+'\n'+read(source/'docs/apache-contact.conf.example')
+        apache+='\nSetEnvIf Request_URI "^/(?:$|index\\.html$|website-assets/|website-contact$|download(?:/|$)|kundenverwaltung(?:/|$)|'+ '|'.join(re.escape(x)+r'(?:/index\.html|/)?$' for x in PAGES)+')" io_website\n'
         apache+='CustomLog /var/log/apache2/io-website-access.log "%a %t %m %U %>s" env=io_website\n'
         patched,backend_log=website_logging(insert_include(read(vhost)))
         apache+=backend_log
@@ -555,10 +592,10 @@ def publish(source,sha,vhost):
         tx.write(vhost,patched)
         tx.write('/etc/logrotate.d/io-website','/var/log/apache2/io-website-access.log {\n daily\n rotate 7\n maxage 7\n missingok\n notifempty\n compress\n delaycompress\n sharedscripts\n postrotate\n  /usr/sbin/apache2ctl graceful > /dev/null\n endscript\n}\n')
         run(['a2enmod','proxy','proxy_http','headers','setenvif'])
-        run(['systemctl','daemon-reload']);run(['systemctl','enable','io-website-contact'])
+        run(['systemctl','daemon-reload']);run(['systemctl','enable','io-website-contact','io-website-downloads'])
         switch_link('releases/'+stamp)
         run(['apache2ctl','configtest'])
-        run(['systemctl','restart','io-website-contact']);run(['systemctl','reload','apache2'])
+        run(['systemctl','restart','io-website-contact','io-website-downloads']);run(['systemctl','reload','apache2'])
         for _ in range(15):
             try:
                 with urllib.request.urlopen('http://127.0.0.1:8091/website-contact',timeout=2) as response:
@@ -572,12 +609,17 @@ def publish(source,sha,vhost):
             if not probe(path).startswith('200|'):raise Stop('Website-Pfad nicht erreichbar: '+path)
         with urllib.request.urlopen('http://127.0.0.1:8091/website-contact',timeout=3) as response:
             if not json.load(response).get('available'):raise Stop('Formular nicht bereit.')
-        state={'version':version,'commit':sha,'current':'releases/'+stamp,'previous':old,'vhost':str(vhost)}
+        wait_downloads()
+        if not probe('/download/').startswith('200|') or not probe('/kundenverwaltung/').startswith('303|'):
+            raise Stop('Geschützte Download-/Admin-Routen nicht bereit.')
+        state={'downloads_enabled':True,'version':version,'commit':sha,'current':'releases/'+stamp,'previous':old,'vhost':str(vhost)}
         # Keep runtime with each release for complete website/contact rollback.
         bundle=STATE/'release-runtime'/stamp;bundle.mkdir(parents=True)
         shutil.copy2(source/'server/contact.py',bundle/'contact.py')
         shutil.copy2(source/'server/io-website-contact.service',bundle/'service')
         shutil.copy2(ETC/'apache.conf',bundle/'apache.conf')
+        shutil.copy2(source/'server/downloads.py',bundle/'downloads.py')
+        shutil.copy2(source/'server/io-website-downloads.service',bundle/'downloads.service')
         atomic(ETC/'state.json',json.dumps(state,indent=2)+'\n',0o600)
         atomic('/usr/local/sbin/io-website',read(source/'deploy/io-website.py'),0o755)
     except BaseException:
@@ -585,6 +627,8 @@ def publish(source,sha,vhost):
         if old is not None:switch_link(old)
         else:current.unlink(missing_ok=True)
         subprocess.run(['systemctl','daemon-reload'],capture_output=True)
+        if old_downloads=='active':subprocess.run(['systemctl','restart','io-website-downloads'],capture_output=True)
+        else:subprocess.run(['systemctl','disable','--now','io-website-downloads'],capture_output=True)
         if old_contact=='active':subprocess.run(['systemctl','restart','io-website-contact'],capture_output=True)
         else:subprocess.run(['systemctl','disable','--now','io-website-contact'],capture_output=True)
         subprocess.run(['apache2ctl','configtest'],capture_output=True)
@@ -602,27 +646,40 @@ def rollback():
     metadata=json.loads(read(WEB/previous/'release.json'))
     if not bundle.is_dir():raise Stop('Gesicherte Kontakt-Konfiguration fehlt.')
     tx=Transaction();old=state['current']
+    was_downloads=state.get('downloads_enabled',False)
+    has_downloads=(bundle/'downloads.py').exists()
     try:
         tx.write(SERVICE/'contact.py',read(bundle/'contact.py'))
         tx.write('/etc/systemd/system/io-website-contact.service',read(bundle/'service'))
         tx.write(ETC/'apache.conf',read(bundle/'apache.conf'))
+        if has_downloads:
+            tx.write(SERVICE/'downloads.py',read(bundle/'downloads.py'))
+            tx.write('/etc/systemd/system/io-website-downloads.service',read(bundle/'downloads.service'))
         switch_link(previous);run(['apache2ctl','configtest'])
         run(['systemctl','daemon-reload']);run(['systemctl','restart','io-website-contact']);run(['systemctl','reload','apache2'])
+        if has_downloads:
+            run(['systemctl','enable','--now','io-website-downloads']);run(['systemctl','restart','io-website-downloads']);wait_downloads()
+        else:run(['systemctl','disable','--now','io-website-downloads'])
         if not probe('/').startswith('200|'):raise Stop('Rollback-Prüfung fehlgeschlagen.')
     except BaseException:
         tx.restore();switch_link(old)
         subprocess.run(['systemctl','daemon-reload'],capture_output=True)
+        if was_downloads:
+            subprocess.run(['systemctl','enable','io-website-downloads'],capture_output=True)
+            subprocess.run(['systemctl','restart','io-website-downloads'],capture_output=True)
+        else:subprocess.run(['systemctl','disable','--now','io-website-downloads'],capture_output=True)
+        subprocess.run(['systemctl','daemon-reload'],capture_output=True)
         subprocess.run(['systemctl','restart','io-website-contact'],capture_output=True)
         subprocess.run(['systemctl','reload','apache2'],capture_output=True)
         raise
-    state.update({'current':previous,'previous':old,**metadata})
+    state.update({'downloads_enabled':has_downloads,'current':previous,'previous':old,**metadata})
     atomic(ETC/'state.json',json.dumps(state,indent=2)+'\n',0o600)
     print('Website und Kontaktcode zurückgesetzt; Postfach und Nachrichten unverändert.')
 
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action',choices=['plan','install','update','status','rollback','sync-mail','mail-password'])
+    parser.add_argument('action',choices=['plan','install','update','status','rollback','sync-mail','mail-password','admin-password'])
     parser.add_argument('--ref',default='latest',help='Git-Tag/Commit/Branch; Standard: neuestes GitHub-Release')
     parser.add_argument('--vhost',type=Path,default=VHOST)
     parser.add_argument('--ipv4',default=IP,help='IPv4 des vorhandenen CTL-Mailservers')
@@ -633,7 +690,8 @@ def main():
         raise Stop('Gültige IPv4-Adresse erforderlich.') from None
     if args.action=='plan':
         print('Version '+VERSION+'; Ziel: '+HOST+'; Postfach: '+ADDRESS+'\nVHost: '+str(args.vhost))
-        print('GitHub -> getrennte Website-Releases; additive Postfix-/DKIM-Tabellen; Dovecot-Konto unter gemeinsamer Sperre.\nKeine Änderungen an Datenbank, DNS, Firewall, TLS oder RailSoftware-Dateien.')
+        print('Download-Admin: omueller369@gmail.com; Passwort bei erster Einrichtung verdeckt abfragen.')
+        print('GitHub -> getrennte Website-Releases; additive Postfix-/DKIM-Tabellen; Dovecot-Konto unter gemeinsamer Sperre.\nKeine Änderungen an der RailSoftware-Datenbank, DNS, Firewall, TLS oder RailSoftware-Dateien.')
         return
     if os.geteuid()!=0:raise Stop('sudo/root erforderlich.')
     os.umask(0o077)
@@ -643,7 +701,7 @@ def main():
     if args.action=='status':
         print(read(ETC/'state.json') if (ETC/'state.json').exists() else 'Noch kein Website-Release aktiv.')
         print('Website: https://'+HOST+'/; IMAP/SMTP-Konto: '+ADDRESS)
-        for name in ('apache2','postfix','dovecot','opendkim','io-website-contact'):
+        for name in ('apache2','postfix','dovecot','opendkim','io-website-contact','io-website-downloads'):
             result=subprocess.run(['systemctl','is-active',name],capture_output=True,text=True)
             print(name+': '+result.stdout.strip())
         return
@@ -661,6 +719,16 @@ def main():
                     subprocess.run(['systemctl','restart','postsrsd'],capture_output=True)
                     raise
             return
+        if args.action=='admin-password':
+            if not (ETC/'download-admin.json').exists():raise Stop('Zuerst update/install durchführen.')
+            tx=Transaction();tx.save(ETC/'download-admin.json')
+            try:
+                download_admin(reset=True)
+                run(['systemctl','restart','io-website-downloads'])
+                wait_downloads()
+            except BaseException:
+                tx.restore();subprocess.run(['systemctl','restart','io-website-downloads'],capture_output=True);raise
+            print('Download-Admin-Passwort geändert; bestehende Admin-Sitzungen werden verworfen.');return
         preflight(args.vhost)
         if args.action=='mail-password':
             if not (ETC/'state.json').exists() or not (ETC/'contact-password').exists():
@@ -682,6 +750,9 @@ def main():
             atomic(ETC/'dns-required.txt',records,0o600);print(records)
             dns_check(public,args.ipv4)
         ensure_gunicorn()
+        run(['/usr/bin/python3','-c',
+             'import sqlite3, hashlib; sqlite3.connect(":memory:").close(); '
+             'hashlib.scrypt(b"runtime-check", salt=b"runtime-check", n=16384, r=8, p=1, maxmem=64*1024*1024)'])
         if not shutil.which('curl'):raise Stop('curl wird für lokale HTTPS-Prüfungen benötigt.')
         source,sha=fetch_source(args.ref)
         try:
@@ -691,6 +762,11 @@ def main():
                 with socket.socket() as sock:
                     try:sock.bind(('127.0.0.1',8091))
                     except OSError:raise Stop('Port 8091 bereits belegt. Keine Änderung.') from None
+            if not Path('/etc/systemd/system/io-website-downloads.service').exists():
+                with socket.socket() as sock:
+                    try:sock.bind(('127.0.0.1',8092))
+                    except OSError:raise Stop('Port 8092 bereits belegt. Keine Änderung.') from None
+            download_admin()
             # Install the exact checked source before adding the CTL ExecStartPost hook.
             atomic('/usr/local/sbin/io-website',read(source/'deploy/io-website.py'),0o755)
             provision_mail()

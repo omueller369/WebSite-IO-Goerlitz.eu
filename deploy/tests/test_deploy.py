@@ -114,6 +114,27 @@ class DeploymentTests(unittest.TestCase):
         unit=(Path(__file__).resolve().parents[2]/'server/io-website-contact.service').read_text()
         self.assertIn('ExecStart=/usr/bin/python3 -m gunicorn ',unit)
         self.assertNotIn('ExecStart=/usr/bin/gunicorn ',unit)
+    def test_admin_prompt_hashes_password_and_preserves_existing_hash(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);saved=[]
+            def write(path,text,mode):
+                self.assertEqual(mode,0o600);Path(path).write_text(text);saved.append(text)
+            with patch.object(d,'ETC',root),patch.object(d,'atomic',side_effect=write),patch.object(d.sys.stdin,'isatty',return_value=True),patch.object(d.getpass,'getpass',side_effect=['Admin-long-test-123','Admin-long-test-123']) as prompt:
+                d.download_admin();d.download_admin()
+            self.assertEqual(prompt.call_count,2)
+            self.assertEqual(len(saved),1)
+            self.assertNotIn('Admin-long-test-123',saved[0])
+            import json,hashlib
+            data=json.loads(saved[0]);self.assertEqual(data['email'],'omueller369@gmail.com')
+            _,salt,expected=data['password'].split('$')
+            actual=hashlib.scrypt(b'Admin-long-test-123',salt=salt.encode(),n=16384,r=8,p=1,maxmem=64*1024*1024).hex()
+            self.assertEqual(actual,expected)
+    def test_download_unit_keeps_customer_state_outside_releases(self):
+        unit=(Path(__file__).resolve().parents[2]/'server/io-website-downloads.service').read_text()
+        self.assertIn('StateDirectory=io-website-downloads',unit)
+        self.assertIn('LoadCredential=download-admin:',unit)
+        self.assertIn('127.0.0.1:8092',unit)
+        self.assertIn('/usr/bin/python3 -m gunicorn',unit)
     def test_plan_has_no_system_mutations(self):
         with patch.object(d.sys,'argv',['io-website','plan']),patch.object(d,'run') as run,patch.object(d,'atomic') as atomic,patch('sys.stdout',io.StringIO()):
             d.main()
