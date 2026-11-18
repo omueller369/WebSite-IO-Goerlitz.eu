@@ -18,7 +18,7 @@ Die private Sites-Vorschau hat plattformeigenen Zugang und versendet keine Formu
 
 ## KI-Musik und Logo
 
-Eingesetzten KI-Anbieter, Nutzungsrechte und Verarbeitung personenbezogener Inhalte vor Beauftragung festlegen. Keine Hörbeispiele, Preise, Kundenreferenzen oder exklusiven Rechte wurden erfunden. Das IO-Zeichen ist ein erster SVG-Entwurf in Petrol/Hellgrün; vor einer Markenanmeldung Kennzeichenrechte prüfen.
+Eingesetzten KI-Anbieter, Nutzungsrechte und Verarbeitung personenbezogener Inhalte vor Beauftragung festlegen. Keine Hörbeispiele, Preise, Kundenreferenzen oder exklusiven Rechte wurden erfunden. Das neue IO-Zeichen verbindet Buchstaben mit Leiterbahn und parallelen Grundlinien in Weinrot/Dunkelblau. Es liegt als transparentes PNG und eingebettete SVG-Komposition vor; die Farbwelt orientiert sich am dokumentierten Rail-Software-Logo. Dateidetails und Quelle stehen in BRANDING.md.
 
 ## Download 0.2.0
 

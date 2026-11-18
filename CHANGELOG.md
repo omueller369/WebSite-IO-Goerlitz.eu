@@ -1,5 +1,14 @@
 # Änderungen
 
+## 0.3.0
+
+- Neues IO-Unternehmenslogo mit Leiterbahn- und Schienen-Bezug, transparenter Bildmarke und Wortmarke.
+- Weinrot/Dunkelblau aus der Rail-Software-Farbfamilie für die gesamte Website einschließlich Download und Kundenverwaltung.
+- Unverändertes Rail-Software-Produktlogo in die Produktdarstellung eingebunden.
+- Versionierte Logo- und Stylesheet-Adressen; weiterhin statisch exportierbare öffentliche Seiten.
+- Browserprüfung um echte Bilddateien, Start- und Unternehmensseite sowie die Sicherheits-Header des geschützten Bereichs erweitert.
+
+
 ## 0.2.2
 
 - Behebt extrem schmale Download- und Verwaltungsspalten auf großen Bildschirmen durch einen eigenen zentrierten Portal-Container.

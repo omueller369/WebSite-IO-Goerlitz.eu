@@ -1,3 +1,5 @@
+> Erscheinungsbild 0.3.0: neues IO-Logo und Weinrot/Dunkelblau auch im geschützten Bereich. Auf dem eingerichteten Server mit `sudo io-website update --ref v0.3.0` übernehmen.
+
 # Download und Kundenverwaltung · Version 0.2.2
 
 Öffentliche Präsentationsseiten bleiben statisch exportierbar. Download-Anmeldung und Kundenverwaltung laufen in einem getrennten Serverdienst mit eigener SQLite-Datenbank. Keine Kopplung an TF-Konten, die RailSoftware-Datenbank oder Postfachpasswörter.
